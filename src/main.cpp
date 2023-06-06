@@ -81,7 +81,7 @@ void inline refreshTimeInfo() {
   drawBuf.pushSprite(1, 168);
   drawBuf.deleteSprite();
 
-  sprintf(buf, "%d月%d日", info.tm_mon + 1, info.tm_mday);
+  sprintf(buf, "%d-%d-%d", info.tm_year + 1900, info.tm_mon + 1, info.tm_mday);
   drawBuf.createSprite(98, 32);
   drawBuf.fillSprite(bgColor);
   drawBuf.setTextDatum(CC_DATUM);
