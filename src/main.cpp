@@ -6,6 +6,7 @@
 #include <TFT_eSPI.h>
 #include <TJpg_Decoder.h>
 #include <ZdyLwFont_20.h>
+#include <string>
 
 TFT_eSPI tft = TFT_eSPI();
 char buf[32] = {0};
@@ -16,7 +17,7 @@ TFT_eSprite scrollBuf(&tft);
 uint16_t bgColor = 0xFFFF;
 String cityCode = "101280601";
 String WEEK_DAYS[7] = {"日", "一", "二", "三", "四", "五", "六"};
-String scrollText[6];
+String scrollText[7];
 int currentIndex = 0;
 int prevTime = 0;
 
@@ -34,8 +35,8 @@ void inline setupJpgDecoder() {
 }
 
 void inline drawPageFrame() {
-  TJpgDec.drawJpg(40, 0, watchtop, sizeof(watchtop));
-  TJpgDec.drawJpg(40, 220, watchbottom, sizeof(watchbottom));
+  TJpgDec.drawJpg(20, 0, watchtop, sizeof(watchtop));
+  TJpgDec.drawJpg(20, 220, watchbottom, sizeof(watchbottom));
   tft.setViewport(0, 20, 320, 200);
   tft.fillScreen(0x0000);
   tft.fillRoundRect(0, 0, 320, 200, 4, bgColor);
@@ -156,17 +157,18 @@ void inline showWeatherData(String *cityDZ, String *dataSK, String *dataFC) {
 
   deserializeJson(doc, *cityDZ);
   JsonObject dz = doc.as<JsonObject>();
-  scrollText[3] = "今日" + dz["weather"].as<String>();
+  scrollText[3] = dz["weather"].as<String>();
 
   deserializeJson(doc, *dataFC);
   JsonObject fc = doc.as<JsonObject>();
   scrollText[4] = "最低温度" + fc["fd"].as<String>() + "℃";
   scrollText[5] = "最高温度" + fc["fc"].as<String>() + "℃";
+  scrollText[6] = WiFi.localIP().toString();
   drawBuf.unloadFont();
 }
 
 void inline scrollTxt(int pos) {
-  scrollBuf.createSprite(148, 24);
+  scrollBuf.createSprite(160, 24);
   scrollBuf.fillSprite(bgColor);
   scrollBuf.setTextWrap(false);
   scrollBuf.setTextDatum(CC_DATUM);
@@ -185,7 +187,7 @@ void inline scrollBanner() {
       }
       scrollBuf.deleteSprite();
       scrollBuf.unloadFont();
-      if (currentIndex >= 5) {
+      if (currentIndex >= 6) {
         currentIndex = 0;
       } else {
         currentIndex += 1;
@@ -196,8 +198,7 @@ void inline scrollBanner() {
 }
 
 void inline refreshWeatherInfo() {
-  String URL =
-      "http://d1.weather.com.cn/weather_index/" + cityCode + ".html?_=";
+  String URL = "http://d1.weather.com.cn/weather_index/" + cityCode + ".html";
   HTTPClient httpClient;
   httpClient.begin(URL);
   httpClient.setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS "
@@ -221,9 +222,6 @@ void inline refreshWeatherInfo() {
     String jsonFC = str.substring(indexStart + 5, indexEnd);
     Serial.println(jsonFC);
     showWeatherData(&jsonCityDZ, &jsonDataSK, &jsonFC);
-  } else {
-    Serial.println("请求城市天气错误：");
-    Serial.print(httpCode);
   }
   httpClient.end();
 }
